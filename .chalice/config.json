@@ -1,0 +1,31 @@
+{
+    "version": "2.0",
+    "app_name": "boost-monitor",
+    "tags": {
+        "Environment": "Development",
+        "Application": "Boost-Monitor"
+    },
+    "lambda_memory_size": 128,
+    "stages": {
+        "dev": {
+            "api_gateway_stage": "api",
+            "lambda_timeout": 240,
+            "tags": {
+                "Environment": "Development"
+            },
+            "environment_variables": {
+              "CHALICE_STAGE": "dev"
+            }
+        },
+        "prod": {
+            "api_gateway_stage": "api",
+            "lambda_timeout": 240,
+            "tags": {
+                "Environment": "prod"
+            },
+            "environment_variables": {
+              "CHALICE_STAGE": "prod"
+            }
+        }
+    }
+}

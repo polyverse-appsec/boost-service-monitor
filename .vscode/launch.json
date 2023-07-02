@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+    {
+        "name": "Local Lambda Server",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/server/server.py",
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
+    ]
+}

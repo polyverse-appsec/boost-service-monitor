@@ -10,11 +10,20 @@ import requests
 service_name = 'boostCloudService'
 
 
-def test_api_status(api, testurl):
+def generateAuthSession():
+    # Implement logic here to fetch github session and return it
+    return 'testemail: boost-service-monitor@polytest.ai'
+
+
+def test_api_status(api, testurl, request_body, results_test):
     headers = {'User-Agent': f'Boost-VSCE/{API_VERSION}'}
 
     session = generateAuthSession()
-    payload = {"session": session}
+    payload = {"session": session, "organization": "polytest.ai"}
+
+    # Merge request_body into payload
+    if request_body:
+        payload.update(request_body)
 
     max_retries = 3
     retries = 0
@@ -24,13 +33,25 @@ def test_api_status(api, testurl):
         try:
             response = requests.post(testurl, headers=headers, json=payload)
             if response.status_code == 200:
+                # Convert response to json
+                json_response = response.json()
+
+                # Verify all members of results_test are found in response and non-empty data
+                for member in results_test:
+                    if member not in json_response:
+                        return {'error': f"Missing or empty data: {member}"}
+
                 break
         except Exception:
             response = {"statusCode": 500, "body": traceback.format_exc()}
 
         retries += 1
         if retries <= max_retries:
-            time.sleep(random.uniform(15, 30))  # wait 15-30 seco
+            time.sleep(random.uniform(15, 30))  # wait 15-30 seconds
+
+    response_time = time.time() - start_time
+    isSuccessful = 1 if response.status_code == 200 else 0
+    duration = float("{:.3f}".format(response_time))
 
     response_time = time.time() - start_time
     isSuccessful = 1 if response.status_code == 200 else 0
@@ -97,14 +118,13 @@ def test_api_status(api, testurl):
     else:
         print(f"{service_name}:{api}:status={isSuccessful}:{duration} sec")
 
+    functionalPass = 'error' in json_response if json_response else False
+
     return {
         'statusCode': response.status_code,
         'responseTime': response_time,
         'isSuccessful': isSuccessful,
-        'retries': retries
+        'functionalPass': functionalPass,
+        'retries': retries,
+        'payload': json_response  # add the json response to the returned data
     }
-
-
-def generateAuthSession():
-    # Implement logic here to fetch github session and return it
-    return 'testemail: boost-service-monitor@polytest.ai'

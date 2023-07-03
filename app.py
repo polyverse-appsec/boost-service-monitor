@@ -71,7 +71,7 @@ def monitor_explain(event, _):
 def monitor_testgen(event, _):
     request_body = {'code': 'print("Hello, World!")'}
     results_test = {'testcode', 'chunked', 'truncated'}
-    return test_api_status("", service_uris[stage]['testgen'], request_body, results_test)
+    return test_api_status("testgen", service_uris[stage]['testgen'], request_body, results_test)
 
 
 key_IsChunked = 'chunked'
@@ -120,7 +120,7 @@ def monitor_analyze_function(event, _):
     request_body = {'code': 'print("Hello, World!")',
                     'inputMetadata': json.dumps({'lineNumberBase': 0})}
     results_test = {'status', 'details'}
-    return test_api_status("", service_uris[stage]['analyze_function'], request_body, results_test)
+    return test_api_status("analyze_function", service_uris[stage]['analyze_function'], request_body, results_test)
 
 
 @app.lambda_function(name='monitor_compliance')

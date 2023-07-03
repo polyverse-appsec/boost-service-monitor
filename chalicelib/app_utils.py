@@ -61,10 +61,10 @@ def test_api_status(api, testurl, request_body, results_test):
             time.sleep(random.uniform(15, 30))  # wait 15-30 seconds
 
     response_time = time.time() - start_time
-    isSuccessful = 1 if response.status_code == 200 else 0
+    isSuccessful = float(1 if response.status_code == 200 else 0)
     duration = float("{:.3f}".format(response_time))
 
-    functionalPass = 'error' not in json_response if json_response else False
+    functionalPass = float('error' not in json_response if json_response else False)
     if 'error' in json_response if json_response else False:
         print(f"Exception/Error: {api} : {json_response['error']}")
 

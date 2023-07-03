@@ -3,7 +3,7 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
-## Version 0.3.0: July 2nd, 2023
+## Version 0.3.0: July 3rd, 2023
 
 ### New Features
 - Service Check on Flow Diagram
@@ -16,6 +16,8 @@ Polyverse Boost Cloud Service Monitor
 - Service Check on Analyze Function
 - Service Check on Summarize
 - Service Check on Custom
+- Monitors running in Dev will monitor Boost Dev services
+- Monitors running in Prod will monitor Boost Prod services
 
 ### Enhancements
 - N/A

@@ -43,7 +43,151 @@ def monitor_explain(event, _):
     }
     results_test = {'explanation', 'chunked', 'truncated'}
 
-    response = test_api_status("explain", prod_explain,
-                               request_body, results_test)
+    return test_api_status("explain", prod_explain,
+                           request_body, results_test)
 
-    return response
+
+@app.lambda_function(name='monitor_testgen')
+def monitor_testgen(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'testcode', 'chunked', 'truncated'}
+
+    return test_api_status("", prod_testgen,
+                           request_body, results_test)
+
+
+key_ChunkPrefix = 'chunk_prefix'
+key_NumberOfChunks = 'chunks'
+key_IsChunked = 'chunked'
+
+
+@app.lambda_function(name='monitor_summarize')
+def monitor_summarize(event, _):
+    request_body = {
+        'inputs': 'first sentence\nsecond sentence\nthird sentence',
+        'analysis_label': 'Explanation',
+        'analysis_type': 'explain',
+    }
+    results_test = {'analysis_label', 'analysis_type', 'analysis', key_IsChunked, 'truncated'}
+
+    response = test_api_status("summarize", prod_summarize, request_body, results_test)
+
+    request_body = {
+        'chunk_0': 'first sentence',
+        'chunk_1': 'second sentence',
+        'chunk_2': 'third sentence',
+        'chunks': 3,
+        'chunk_prefix': 'chunk_',
+        'analysis_label': 'Explanation',
+        'analysis_type': 'explain',
+    }
+    results_test = {'analysis_label', 'analysis_type', 'analysis', key_IsChunked, 'truncated'}
+
+    response2 = test_api_status("summarize", prod_summarize,
+                                request_body, results_test)
+
+    return response if not response['statusCode'] == 200 or not response['isSuccessful'] or not response['functionalPass'] else response2
+
+
+@app.lambda_function(name='monitor_flowdiagram')
+def monitor_flowdiagram(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("flowdiagram", prod_flowdiagram,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_analyze')
+def monitor_analyze(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("analyze", prod_analyze,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_analyze_function')
+def monitor_(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+        'inputMetadata': {'lineNumberBase': 0}
+    }
+    results_test = {'status', 'details', 'chunked', 'truncated'}
+
+    return test_api_status("", prod_analyze_function,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_compliance')
+def monitor_compliance(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("compliance", prod_compliance,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_compliance_function')
+def monitor_compliance_function(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+        'inputMetadata': {'lineNumberBase': 0}
+    }
+    results_test = {'status', 'details', 'chunked', 'truncated'}
+
+    return test_api_status("compliance_function", prod_compliance_function,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_blueprint')
+def monitor_blueprint(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'blueprint', 'chunked', 'truncated'}
+
+    return test_api_status("blueprint", prod_blueprint,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_codeguidelines')
+def monitor_codeguidelines(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("codeguidelines", prod_codeguidelines,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_generate')
+def monitor_generate(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+        'explanation': 'This code is a simple hello world program.',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("generate", prod_generate,
+                           request_body, results_test)
+
+
+@app.lambda_function(name='monitor_customprocess')
+def monitor_customprocess(event, _):
+    request_body = {
+        'code': 'print("Hello, World!")',
+    }
+    results_test = {'analysis', 'chunked', 'truncated'}
+
+    return test_api_status("customprocess", prod_customprocess,
+                           request_body, results_test)

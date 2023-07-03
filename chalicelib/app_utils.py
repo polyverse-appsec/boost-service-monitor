@@ -27,6 +27,8 @@ def test_api_status(api, testurl, request_body, results_test):
 
     max_retries = 3
     retries = 0
+    json_response = None
+
     while retries <= max_retries:
         start_time = time.time()
 
@@ -42,8 +44,17 @@ def test_api_status(api, testurl, request_body, results_test):
                         return {'error': f"Missing or empty data: {member}"}
 
                 break
+            elif response.status_code == 500:
+                # Convert response to json
+                json_response = response.json()
+
+                if 'error' not in json_response:
+                    return {'error': "Missing or empty data: error"}
+
+                break
         except Exception:
             response = {"statusCode": 500, "body": traceback.format_exc()}
+            print(f"Exception/Error: {api} : {response['body']}")
 
         retries += 1
         if retries <= max_retries:
@@ -53,9 +64,9 @@ def test_api_status(api, testurl, request_body, results_test):
     isSuccessful = 1 if response.status_code == 200 else 0
     duration = float("{:.3f}".format(response_time))
 
-    response_time = time.time() - start_time
-    isSuccessful = 1 if response.status_code == 200 else 0
-    duration = float("{:.3f}".format(response_time))
+    functionalPass = 'error' not in json_response if json_response else False
+    if 'error' in json_response if json_response else False:
+        print(f"Exception/Error: {api} : {json_response['error']}")
 
     if cloudwatch:
         # Publish response time metric
@@ -96,6 +107,25 @@ def test_api_status(api, testurl, request_body, results_test):
             },
         ], Namespace=service_name)
 
+        # Publish functional state
+        cloudwatch.put_metric_data(MetricData=[
+            {
+                'MetricName': 'FunctionalPass',
+                'Dimensions': [
+                    {
+                        'Name': 'URL',
+                        'Value': testurl
+                    },
+                    {
+                        'Name': 'api',
+                        'Value': api
+                    },
+                ],
+                'Unit': 'None',
+                'Value': functionalPass
+            },
+        ], Namespace=service_name)
+
         # Publish failed retry metric
         if retries > 0 and isSuccessful:
             cloudwatch.put_metric_data(MetricData=[
@@ -116,9 +146,7 @@ def test_api_status(api, testurl, request_body, results_test):
                 },
             ], Namespace=service_name)
     else:
-        print(f"{service_name}:{api}:status={isSuccessful}:{duration} sec")
-
-    functionalPass = 'error' in json_response if json_response else False
+        print(f"{service_name}: {api}: status={isSuccessful} : function={functionalPass} : {duration} sec")
 
     return {
         'statusCode': response.status_code,

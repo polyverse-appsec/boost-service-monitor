@@ -19,12 +19,12 @@ def test_api_status(api, testurl, request_body, results_test):
     try:
         result = _test_api_status(api, testurl, request_body, results_test)
 
-        print(f"API Test Result: {api} : {result}")
+        print(f"API Test Result: {api} : {testurl} : {result}")
         return result
 
     except Exception:
         errorInfo = traceback.print_exc()
-        print(f"Exception/Error: {api} : {errorInfo}")
+        print(f"Exception/Error: {api} : {testurl} : {errorInfo}")
 
 
 def _test_api_status(api, testurl, request_body, results_test):

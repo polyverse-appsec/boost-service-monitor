@@ -6,6 +6,7 @@ import random
 import time
 import traceback
 import requests
+import os
 
 service_name = 'boostCloudService'
 
@@ -64,13 +65,21 @@ def _test_api_status(api, testurl, request_body, results_test):
                     return {'error': "Missing or empty data: error"}
 
                 break
+            else:
+                try:
+                    json_response = response.json()
+                except Exception:
+                    pass
+
         except Exception:
             response = {"statusCode": 500, "body": traceback.format_exc()}
             print(f"Exception/Error: {api} : {response['body']}")
 
         retries += 1
         if retries <= max_retries:
-            time.sleep(random.uniform(15, 30))  # wait 15-30 seconds
+            # if running in AWS, just retry immediately (to save debugging time)
+            if "AWS_LAMBDA_FUNCTION_NAME" in os.environ:
+                time.sleep(random.uniform(15, 30))  # wait 15-30 seconds
 
     response_time = time.time() - start_time
     isSuccessful = float(1 if response.status_code == 200 else 0)

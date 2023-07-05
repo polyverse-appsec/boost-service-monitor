@@ -16,6 +16,18 @@ def generateAuthSession():
 
 
 def test_api_status(api, testurl, request_body, results_test):
+    try:
+        result = _test_api_status(api, testurl, request_body, results_test)
+
+        print(f"API Test Result: {api} : {result}")
+        return result
+
+    except Exception:
+        errorInfo = traceback.print_exc()
+        print(f"Exception/Error: {api} : {errorInfo}")
+
+
+def _test_api_status(api, testurl, request_body, results_test):
     headers = {'User-Agent': f'Boost-VSCE/{API_VERSION}'}
 
     session = generateAuthSession()
@@ -142,7 +154,7 @@ def test_api_status(api, testurl, request_body, results_test):
                         },
                     ],
                     'Unit': 'None',
-                    'Value': retries
+                    'Value': (retries - 1)
                 },
             ], Namespace=service_name)
     else:
@@ -153,6 +165,6 @@ def test_api_status(api, testurl, request_body, results_test):
         'responseTime': response_time,
         'isSuccessful': isSuccessful,
         'functionalPass': functionalPass,
-        'retries': retries,
+        'retries': retries - 1,
         'payload': json_response  # add the json response to the returned data
     }

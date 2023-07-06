@@ -3,6 +3,20 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
+## Version 0.4.0: July 6th, 2023
+
+### New Features
+- Service Check on Performance
+- Service Check on Performance Function
+- Service Check on Quick Blueprint
+- Service Check on Draft Blueprint
+
+### Enhancements
+- N/A
+
+### Bug Fixes
+- N/A
+
 ## Version 0.3.0: July 3rd, 2023
 
 ### New Features

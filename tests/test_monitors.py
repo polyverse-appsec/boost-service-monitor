@@ -15,7 +15,7 @@ def test_monitor_user_organizations():
     _test_monitor('user_organizations')
 
 
-def test_monitor_ccustomer_portal():
+def test_monitor_customer_portal():
     _test_monitor('customer_portal')
 
 
@@ -65,3 +65,19 @@ def test_monitor_blueprint():
 
 def test_monitor_customprocess():
     _test_monitor('customprocess')
+
+
+def test_monitor_performance():
+    _test_monitor('performance')
+
+
+def test_monitor_performance_function():
+    _test_monitor('performance_function')
+
+
+def test_monitor_quick_blueprint():
+    _test_monitor('quick-blueprint')
+
+
+def test_monitor_draft_blueprint():
+    _test_monitor('draft-blueprint')

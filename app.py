@@ -27,9 +27,11 @@ service_uris = {
         'explain': "https://vdcg2nzj2jtzmtzzcmfwbvg4ey0jxghj" + aws_server,
         'testgen': "https://mqxkx5m7hehbskfvrcfwctbt7y0gghab" + aws_server,
         'generate': "https://egw2c7dn5vz3leffr3mfqodx3a0perwp" + aws_server,
-        'performance': "https://zr4gcodfteyi3zi5skcqnx2fge0rnjdk" + aws_server,
-        'performance_function': "https://vhdpiji3mrr5ass7o5tx5mx5oa0nrjth" + aws_server,
+        'performance': "https://nh6rkkhnex3u2vij6hxd6ivcfu0tfogz" + aws_server,
+        'performance_function': "https://nc65uwxaxpb3zp6slonpnowwxi0aptyu" + aws_server,
         'compare_code': "https://h4vna4mvnun3jkfmoceobnnaau0drouk" + aws_server,
+        'quick-blueprint': "https://pq4inveoxv3l4nnohzp6epd77i0djfsd" + aws_server,
+        'draft-blueprint': "https://qtk6veix3wxx3ywlz35s6npj6y0wywkn" + aws_server,
 
     },
     'dev': {

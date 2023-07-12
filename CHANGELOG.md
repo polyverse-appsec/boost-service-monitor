@@ -3,6 +3,16 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
+## Version 0.4.1: July 12th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- N/A
+
+### Bug Fixes
+- Synchronize Quick/Draft Blueprint filelist serialization with updated service endpoint
 ## Version 0.4.0: July 6th, 2023
 
 ### New Features

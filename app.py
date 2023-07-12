@@ -223,11 +223,11 @@ def monitor_quick_blueprint(event, _):
     "* Architectural Problems Identified: coarse locks in multi-threaded, global and shared memory in library, UI in a non-interactive server, versioning fragility, etc."
 
     request_body = {
-        'filelist': json.dumps(['src/extension.ts',
-                                'src/test/runTest.ts',
-                                'src/test/suite/index.ts',
-                                'src/test/suite/extension.test.ts',
-                                'package.json']),
+        'filelist': ['src/extension.ts',
+                     'src/test/runTest.ts',
+                     'src/test/suite/index.ts',
+                     'src/test/suite/extension.test.ts',
+                     'package.json'],
         'projectName': 'typescript-sample-extension',
         'projectFile': '{"devDependencies": {"axios": "^1.3.5" }}',
         'draftBlueprint': sampleBlueprint,
@@ -241,11 +241,11 @@ def monitor_quick_blueprint(event, _):
 @app.lambda_function(name='monitor_draft-blueprint')
 def monitor_draft_blueprint(event, _):
     request_body = {
-        'filelist': json.dumps(['src/extension.ts',
-                                'src/test/runTest.ts',
-                                'src/test/suite/index.ts',
-                                'src/test/suite/extension.test.ts',
-                                'package.json']),
+        'filelist': ['src/extension.ts',
+                     'src/test/runTest.ts',
+                     'src/test/suite/index.ts',
+                     'src/test/suite/extension.test.ts',
+                     'package.json'],
         'projectName': 'typescript-sample-extension',
     }
 

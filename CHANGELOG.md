@@ -12,7 +12,7 @@ Polyverse Boost Cloud Service Monitor
 - N/A
 
 ### Bug Fixes
-- N/A
+- Fix recursion faults in blueprint and perf monitors in production
 
 ## Version 0.4.1: July 12th, 2023
 

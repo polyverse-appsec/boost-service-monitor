@@ -11,5 +11,19 @@
         "console": "integratedTerminal",
         "justMyCode": true
     },
+    {
+        "name": "Check Monitor Status and Config",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/client/check-status.py",
+        "args": [
+            "--stage",
+            "dev",
+            "--whatif"
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
     ]
 }

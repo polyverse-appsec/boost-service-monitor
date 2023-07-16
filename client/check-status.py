@@ -21,8 +21,10 @@ def update_canary_schedule(client, debug, whatif, detailed, canary, new_schedule
                 response = client.update_canary(
                     Name=canary['Name'],
                     Schedule={
-                        'Expression': new_schedule_expression,# Rate expressions are in 'rate(value unit)' format
-                        'DurationInSeconds': 0,               # Zero means that the canary is to run continuously
+                        # Rate expressions are in 'rate(value unit)' format
+                        'Expression': new_schedule_expression,
+                        # Zero means that the canary is to run continuously
+                        'DurationInSeconds': 0,
                     }
                 )
                 print(colored(f"Canary with the name {canary_name} updated successfully.", 'yellow'))
@@ -35,7 +37,8 @@ def update_canary_schedule(client, debug, whatif, detailed, canary, new_schedule
                 print(colored(f"An error occurred: {e}", 'red'))
                 return 1
         else:
-            print(colored(f"{canary_name}: Current schedule: {current_schedule['Expression']}, but should be {new_schedule_expression}", 'red'))
+            print(colored(f"{canary_name}: Current schedule: {current_schedule['Expression']},"
+                          f" but should be {new_schedule_expression}", 'red'))
 
             return 1
 
@@ -64,7 +67,9 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
                         not_running_services.append(canary['Name'])
 
                     if detailed:
-                        print(colored(f"Canary Name: {canary['Name']}", 'green' if canary_status == 'PASSED' else ('red' if canary_status == 'FAILED' else 'yellow')))
+                        print(colored(f"Canary Name: {canary['Name']}",
+                                      'green' if canary_status == 'PASSED' else
+                                      ('red' if canary_status == 'FAILED' else 'yellow')))
                         print(f"Canary Status: {canary_status}")
                         # Format the datetime
                         timestamp = last_run['Timeline']['Started']

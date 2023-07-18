@@ -41,11 +41,13 @@ def test_monitors(stage=None, name=None, show_available=False):
         deduped_monitors = set()
         for function_name, _ in monitors:
             # Extract the user-friendly name from the function name
-            monitor_name = function_name.split('_')[1]
+            monitor_name = function_name.split('_', 1)[1]
             deduped_monitors.add(monitor_name)
         for monitor in deduped_monitors:
             if name in monitor or name is None:
                 print(f"   {monitor}")
+        return 0
+
     else:
         monitors = get_monitor_names(stage=stage)
 
@@ -53,10 +55,13 @@ def test_monitors(stage=None, name=None, show_available=False):
         if name:
             monitors = [(function_name, stage) for function_name, stage in monitors if name in function_name]
 
+        success = True
+        failed = []
+        all = 0
         # Run the monitors
         for function_name, stage in monitors:
             # Extract the user-friendly name from the function name
-            monitor_name = function_name.split('_')[1]
+            monitor_name = function_name.split('_', 1)[1]
 
             # Retrieve the URI for the monitor
             client = boto3.client('lambda', region_name='us-west-2')
@@ -64,11 +69,20 @@ def test_monitors(stage=None, name=None, show_available=False):
             uri = config['FunctionUrl']
 
             print(f"Running monitor: {monitor_name} in Stage:{stage}")
+            all = all + 1
             response = requests.get(uri)
             if response.status_code == 200:
                 print(colored(f"   {monitor_name}:PASSED", 'green'))
             else:
+                success = False
                 print(colored(f"   {monitor_name}:FAILED", 'red'))
+                failed.append(f"{stage}:{monitor_name}")
+
+        if success:
+            print(colored(f"All {all} Tests PASSED", 'green'))
+        else:
+            print(colored(f"{len(failed)} Tests FAILED out of {all}", 'red'))
+        return 0 if success else 1
 
 
 if __name__ == "__main__":
@@ -79,4 +93,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    test_monitors(stage=args.stage, name=args.name, show_available=args.showAvailable)
+    result = test_monitors(stage=args.stage, name=args.name, show_available=args.showAvailable)
+    exit(result)

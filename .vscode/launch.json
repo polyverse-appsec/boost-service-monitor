@@ -25,5 +25,40 @@
         "console": "integratedTerminal",
         "justMyCode": true
     },
-    ]
+    {
+        "name": "Test Services (show services)",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/client/test-services.py",
+        "args": [
+            "--show",
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
+    {
+        "name": "Test Services (test Dev)",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/client/test-services.py",
+        "args": [
+            "--stage",
+            "dev"
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
+    {
+        "name": "Test Services (Test All)",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/client/test-services.py",
+        "args": [
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },    ]
 }

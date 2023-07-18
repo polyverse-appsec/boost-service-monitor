@@ -1,6 +1,7 @@
 import boto3
 import argparse
 from termcolor import colored
+import datetime
 
 canary_schedule = "rate(1 hour)"
 alarm_period = 3600  # 1 hour in seconds
@@ -92,7 +93,7 @@ def update_alarm(client, debug, whatif, canary_name):
     return True
 
 
-def list_all_canaries_status(client, debug, whatif, stage=None, status=None, detailed=False):
+def list_all_canaries_status(client, debug, whatif, stage=None, status=None, detailed=False, useServerTime=False):
     failing_services = []
     not_running_services = []
     misconfigured_services = []
@@ -103,7 +104,7 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
         if stage is not None and not canary['Name'].startswith(stage):
             continue
 
-        if debug:
+        if detailed:
             print(f"Canary Name: {canary['Name']}")
 
         # Get last run of the canary
@@ -118,12 +119,21 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
                     not_running_services.append(canary['Name'])
 
                 if detailed:
-                    print(colored("   Status:",
+                    print(colored(f"   Status: {canary_status}",
                                   'green' if canary_status == 'PASSED' else
                                   ('red' if canary_status == 'FAILED' else 'yellow')))
-                    # Format the datetime
+
                     timestamp = last_run['Timeline']['Started']
-                    formatted_timestamp = timestamp.strftime('%-I:%M%p')
+
+                    if useServerTime:
+                        formatted_timestamp = timestamp.strftime('%-I:%M%p')
+                    else:
+                        local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+
+                        utc_timestamp = datetime.datetime.strptime(timestamp.isoformat(), "%Y-%m-%dT%H:%M:%S.%f%z")
+                        local_timestamp = utc_timestamp.astimezone(local_timezone)
+                        formatted_timestamp = local_timestamp.strftime('%-I:%M%p')
+
                     print(f"   Last Run Timestamp: {formatted_timestamp}")
                     print("-----")
         else:
@@ -159,13 +169,14 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', help='Enable Debug console logging.')
     parser.add_argument('--whatif', action='store_true', help='Check config = but do not update.')
     parser.add_argument('--status', type=str, help='The status used to filter canary runs.')
+    parser.add_argument('--useServerTime', action='store_true', help='Print timestamps in Cloud server time (instead of local time).')
     parser.add_argument('--detailed', action='store_true', help='Print detailed information of each canary.')
     args = parser.parse_args()
 
     client = boto3.client('synthetics', region_name='us-west-2')  # Change the region name if needed
 
     try:
-        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.status, args.detailed)
+        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.status, args.detailed, args.useServerTime)
     except KeyboardInterrupt:
         print(colored("Exiting by User Interupt...", 'red'))
         result = 1

@@ -81,3 +81,7 @@ def test_monitor_quick_blueprint():
 
 def test_monitor_draft_blueprint():
     _test_monitor('draft-blueprint')
+
+
+def test_quick_summary():
+    _test_monitor('quick-summary')

@@ -10,13 +10,41 @@ import os
 
 service_name = 'boostCloudService'
 
+# Define the directory where test data files are stored
+DATA_DIR = "chalicelib/tests/data"
+
+test_data_dir = os.path.join(os.path.abspath(os.path.curdir), DATA_DIR)
+
+
+def load_all_files_to_map(directory):
+    test_data = {}
+
+    for root, _, files in os.walk(directory):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            relative_path = os.path.relpath(file_path, directory)
+
+            with open(file_path, 'r') as file:
+                content = file.read()
+
+            test_data[relative_path] = content
+
+    return test_data
+
+
+test_data = load_all_files_to_map(test_data_dir)
+
+# Example usage
+# file_content = test_data['compliance/files.json']
+# print(file_content)
+
 
 def generateAuthSession():
     # Implement logic here to fetch github session and return it
     return 'testemail: boost-service-monitor@polytest.ai'
 
 
-def test_api_status(api, testurl, request_body, results_test):
+def eval_test_api_status(api, testurl, request_body, results_test):
     try:
         result = _test_api_status(api, testurl, request_body, results_test)
 

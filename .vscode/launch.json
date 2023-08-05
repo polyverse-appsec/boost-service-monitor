@@ -60,5 +60,17 @@
         "cwd": "${workspaceFolder}",
         "console": "integratedTerminal",
         "justMyCode": true
-    },    ]
+    },
+    {
+        "name": "Test Quick Summary",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/chalicelib/tests/test_quick_summary.py",
+        "args": [
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
+    ]
 }

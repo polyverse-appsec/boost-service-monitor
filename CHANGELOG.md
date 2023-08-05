@@ -3,10 +3,11 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
-## Version 0.4.3: July 19th, 2023
+## Version 0.4.3: August 4th, 2023
 
 ### New Features
-- N/A
+- quick-summary monitor added
+- Ability to load all test data files on startup
 
 ### Enhancements
 - N/A

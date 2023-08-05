@@ -93,5 +93,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    result = test_monitors(stage=args.stage, name=args.name, show_available=args.showAvailable)
+    try:
+        result = test_monitors(stage=args.stage, name=args.name, show_available=args.showAvailable)
+    except KeyboardInterrupt:
+        print(colored("Exiting by User Interupt...", 'red'))
+        result = 1
+
     exit(result)

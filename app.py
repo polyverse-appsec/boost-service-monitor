@@ -142,7 +142,7 @@ def monitor_performance_function(event, _):
 @app.lambda_function(name='monitor_quick-blueprint')
 def monitor_quick_blueprint(event, _):
 
-    sampleBlueprint = "# Architectural Blueprint Summary for: {projectName}"
+    sampleBlueprint = "## Architectural Blueprint Summary for: {projectName}"
     "* Software Project Type: web app, server code, cloud web service, mobile app, shared library, etc."
     "* High-Level Summary: Short summary of software project in a 2-3 sentences"
     "* Software Principles: multi-threaded, event-driven, data transformation, server processing, client app code, etc"

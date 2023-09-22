@@ -3,6 +3,17 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
+## Version 0.4.4: September 22nd, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- N/A
+
+### Bug Fixes
+- Loosen quick-summary content validation
+
 ## Version 0.4.3: August 4th, 2023
 
 ### New Features

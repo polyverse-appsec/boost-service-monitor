@@ -81,9 +81,9 @@ def get_alarms_by_substring(client, substring):
     return alarms
 
 
-def update_alarm(client, debug, whatif, canary_name, alarm_schedule, alarm_period):
+def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period):
 
-    alarms = get_alarms_by_substring(client, canary_name)
+    alarms = get_alarms_by_substring(client, alarm_name)
 
     syntheticFound = False
     applicationInsightFound = True
@@ -94,40 +94,40 @@ def update_alarm(client, debug, whatif, canary_name, alarm_schedule, alarm_perio
         # Update the alarm
         alarm_copy = alarm.copy()
 
-        if alarm['AlarmName'].startswith("Synthetics-Alarm-" + canary_name):
+        if alarm['AlarmName'].startswith("Synthetics-Alarm-" + alarm_name):
             syntheticFound = True
 
             if alarm['Period'] != alarm_period or not alarm['ActionsEnabled']:
                 updatedRequired = True
             else:
                 if debug:
-                    print(f"   Alarm for {canary_name} canary already has the desired config.")
+                    print(f"   Alarm for {alarm_name} already has the desired config.")
                 continue
 
             if debug:
-                print(f"Alarm for {canary_name} canary:\n   {alarm}")
+                print(f"Alarm for {alarm_name}:\n   {alarm}")
 
             if alarm_copy['Period'] != alarm_period:
-                print(colored(f"   Alarm for Canary {canary_name} Period expected:{alarm_period} - actual:{alarm_copy['Period']}", 'red'))
+                print(colored(f"   Alarm for {alarm_name} Period expected:{alarm_period} - actual:{alarm_copy['Period']}", 'red'))
 
                 if whatif:
-                    print(colored(f"   Alarm for Canary {canary_name} should be updated"
+                    print(colored(f"   Alarm for {alarm_name} should be updated"
                                   f" to have the following period: {alarm_period}", 'red'))
                     continue
 
                 alarm_copy['Period'] = alarm_period
 
             if not alarm_copy['ActionsEnabled']:
-                print(colored(f"   Alarm for Canary {canary_name} ActionsEnabled expected:True - actual:{alarm_copy['ActionsEnabled']}", 'red'))
+                print(colored(f"   Alarm for {alarm_name} ActionsEnabled expected:True - actual:{alarm_copy['ActionsEnabled']}", 'red'))
 
                 if whatif:
-                    print(colored(f"   Alarm for Canary {canary_name} should be updated"
+                    print(colored(f"   Alarm for {alarm_name} should be updated"
                                   f" to have the ActionsEnabled True", 'red'))
                     continue
 
                 alarm_copy['ActionsEnabled'] = True
 
-            print(colored(f"   Synthetic Alarm for Canary {canary_name} updated successfully.", 'yellow'))
+            print(colored(f"   Synthetic Alarm for {alarm_name} updated successfully.", 'yellow'))
 
         elif alarm['AlarmName'].startswith("ApplicationInsights"):
             applicationInsightFound = True
@@ -176,12 +176,33 @@ def update_alarm(client, debug, whatif, canary_name, alarm_schedule, alarm_perio
 
     # Check if alarm exists
     if not syntheticFound:
-        print(colored(f"   No Synthentic Alarm with the name {canary_name} found.", "red"))
+        print(colored(f"   No Synthentic Alarm with the name {alarm_name} found.", "red"))
 
     if not applicationInsightFound:
-        print(colored(f"   No Application Insights Alarms with the name {canary_name} found.", "red"))
+        print(colored(f"   No Application Insights Alarms with the name {alarm_name} found.", "red"))
 
     return updatedRequired
+
+
+def get_canaries_by_substring(client, substring=None):
+    canaries = []
+    next_token = None
+
+    while True:
+        if next_token:
+            response = client.describe_canaries(NextToken=next_token)
+        else:
+            response = client.describe_canaries()
+
+        for canary in response['Canaries']:
+            if substring in canary['Name'] if substring else True:
+                canaries.append(canary)
+
+        next_token = response.get('NextToken')
+        if not next_token:
+            break
+
+    return canaries
 
 
 def list_all_canaries_status(client, debug, whatif, stage=None, status=None, detailed=False, useServerTime=False):
@@ -189,14 +210,15 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
     not_running_services = []
     misconfigured_services = []
 
-    response = client.describe_canaries()
+    print("Checking all canaries...")
 
-    for canary in response['Canaries']:
+    canaries = get_canaries_by_substring(client)
+
+    for canary in canaries:
         if stage is not None and not canary['Name'].startswith(stage):
             continue
 
-        if detailed:
-            print(f"Canary Name: {canary['Name']}")
+        print(f"Checking: {canary['Name']}")
 
         # Get last run of the canary
         last_run_response = client.get_canary_runs(Name=canary['Name'], MaxResults=1)

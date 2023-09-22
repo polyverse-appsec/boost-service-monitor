@@ -71,7 +71,8 @@ def get_alarms_by_substring(client, substring):
             response = client.describe_alarms()
 
         for alarm in response['MetricAlarms']:
-            if substring in alarm['AlarmName']:
+            # extra heuristic check to make sure we don't mismatch substrings
+            if substring in alarm['AlarmName'] and (("-func" in substring) == ("-func" in alarm['AlarmName'])):
                 alarms.append(alarm)
 
         next_token = response.get('NextToken')

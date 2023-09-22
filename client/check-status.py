@@ -296,7 +296,7 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
         print(colored("Services Not Running are:\n  " + ',\n  '.join(not_running_services), 'yellow'))
         return 1
     if not failing_services and not not_running_services:
-        print(colored(f"All {len(response['Canaries'])} Services are Running and Passing", 'green'))
+        print(colored(f"All {len(canaries)} Services are Running and Passing", 'green'))
         return 0
 
 

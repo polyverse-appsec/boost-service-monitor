@@ -46,36 +46,112 @@ def update_canary_schedule(client, debug, whatif, detailed, canary, new_schedule
     return 0
 
 
+def get_alarms_by_substring(client, substring):
+    alarms = []
+    next_token = None
+
+    while True:
+        if next_token:
+            response = client.describe_alarms(NextToken=next_token)
+        else:
+            response = client.describe_alarms()
+
+        for alarm in response['MetricAlarms']:
+            if substring in alarm['AlarmName']:
+                alarms.append(alarm)
+
+        next_token = response.get('NextToken')
+        if not next_token:
+            break
+
+    return alarms
+
+
 def update_alarm(client, debug, whatif, canary_name):
-    # Define alarm name based on canary name
-    alarm_name = "Synthetics-Alarm-" + canary_name + "-1"
 
-    # Check if alarm exists
-    alarms = client.describe_alarms(AlarmNames=[alarm_name])
-    if not alarms['MetricAlarms']:
-        print(colored(f"   No Alarm with the name {alarm_name} found.", "red"))
-        return False
+    alarms = get_alarms_by_substring(client, canary_name)
 
-    # Get the alarm
-    alarm = alarms['MetricAlarms'][0]
-    if alarm['Period'] == alarm_period:
-        if debug:
-            print(f"   Alarm for {canary_name} canary already has the desired period.")
-        return True
+    syntheticFound = False
+    applicationInsightFound = True
+    updatedRequired = False
 
-    if debug:
-        print(f"Alarm for {canary_name} canary:\n   {alarm}")
+    for alarm in alarms:
 
-    if not whatif:
         # Update the alarm
         alarm_copy = alarm.copy()
 
-        # Update the necessary fields in the copy
-        alarm_copy['AlarmName'] = alarm_name
-        alarm_copy['Period'] = alarm_period
-        alarm_copy['ActionsEnabled'] = True
+        if alarm['AlarmName'].startswith("Synthetics-Alarm-" + canary_name):
+            syntheticFound = True
+
+            if alarm['Period'] != alarm_period or not alarm['ActionsEnabled']:
+                updatedRequired = True
+            else:
+                if debug:
+                    print(f"   Alarm for {canary_name} canary already has the desired config.")
+                continue
+
+            if debug:
+                print(f"Alarm for {canary_name} canary:\n   {alarm}")
+
+            if alarm_copy['Period'] != alarm_period:
+                print(colored(f"   Alarm for Canary {canary_name} Period expected:{alarm_period} - actual:{alarm_copy['Period']}", 'red'))
+
+                if whatif:
+                    print(colored(f"   Alarm for Canary {canary_name} should be updated"
+                                f" to have the following period: {alarm_period}", 'red'))
+                    continue
+
+                alarm_copy['Period'] = alarm_period
+
+            if not alarm_copy['ActionsEnabled']:
+                print(colored(f"   Alarm for Canary {canary_name} ActionsEnabled expected:True - actual:{alarm_copy['ActionsEnabled']}", 'red'))
+
+                if whatif:
+                    print(colored(f"   Alarm for Canary {canary_name} should be updated"
+                                  f" to have the ActionsEnabled True", 'red'))
+                    continue
+
+                alarm_copy['ActionsEnabled'] = True
+
+            print(colored(f"   Synthetic Alarm for Canary {canary_name} updated successfully.", 'yellow'))
+
+        elif alarm['AlarmName'].startswith("ApplicationInsights"):
+            applicationInsightFound = True
+
+            if alarm['ActionsEnabled']:
+                if debug:
+                    print(f"   Alarm for Application Insight {alarm['AlarmName']} is enabled (should be Disabled).")
+                updatedRequired = True
+            else:
+                if debug:
+                    print(f"   Alarm for Application Insight {alarm['AlarmName']} is disabled (as expected).")
+                continue
+
+            if debug:
+                print(f"Alarm for {alarm['AlarmName']} Application Insight:\n   {alarm}")
+
+            if whatif:
+                print(colored(f"   Alarm for Application Insight {alarm['AlarmName']} should be updated"
+                              f" to have ActionsEnabled=False", 'red'))
+                continue
+
+            alarm_copy['ActionsEnabled'] = False
+
+            # Dimensions is being returned along with metrics, but this is invalid
+            #   combination for setting the alarm data
+            del alarm_copy['Dimensions']
+
+            print(colored(f"   Application Insight Alarm for {alarm['AlarmName']} Disabled successfully.", 'yellow'))
+
+        else:
+            print(colored(f"   Unexpected Alarm {alarm['AlarmName']} found and not handled", 'yellow'))
+            continue
+
+        # delete data not relevant to alarm config
         del alarm_copy['AlarmArn']
         del alarm_copy['AlarmConfigurationUpdatedTimestamp']
+
+        # delete temporary state from past runs
         del alarm_copy['StateValue']
         del alarm_copy['StateReason']
         del alarm_copy['StateReasonData']
@@ -84,13 +160,14 @@ def update_alarm(client, debug, whatif, canary_name):
         # Call the put_metric_alarm function with the updated dictionary
         client.put_metric_alarm(**alarm_copy)
 
-        print(colored(f"   Alarm for Canary {canary_name} updated successfully.", 'yellow'))
-    else:
-        print(colored(f"   Alarm for Canary {canary_name} should be updated"
-                      f" to have the following period: {alarm_period}", 'red'))
-        return False
+    # Check if alarm exists
+    if not syntheticFound:
+        print(colored(f"   No Synthentic Alarm with the name {canary_name} found.", "red"))
 
-    return True
+    if not applicationInsightFound:
+        print(colored(f"   No Application Insights Alarms with the name {canary_name} found.", "red"))
+
+    return updatedRequired
 
 
 def list_all_canaries_status(client, debug, whatif, stage=None, status=None, detailed=False, useServerTime=False):
@@ -144,7 +221,7 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
 
         # Update alarm schedule
         cw_client = boto3.client('cloudwatch', region_name='us-west-2')
-        if not update_alarm(cw_client, debug, whatif, canary['Name']):
+        if update_alarm(cw_client, debug, whatif, canary['Name']):
             misconfigured_services.append(canary['Name'])
 
     print("\n   ")

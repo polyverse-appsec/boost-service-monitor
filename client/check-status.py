@@ -3,11 +3,25 @@ import argparse
 from termcolor import colored
 import datetime
 
-canary_schedule = "rate(1 hour)"
-alarm_period = 3600  # 1 hour in seconds
+secs_per_min = 60
+secs_per_hour = 60 * secs_per_min
+canary_schedule_hourly = "rate({} hour)"
+canary_schedule_day = "cron(0 0 * * ? *)"
+canary_schedule_cron = "cron(0 */{} * * ? *)"
+alarm_period_ring_0 = 1  # primary user operations should be checked hourly
+alarm_period_ring_1 = 3  # basic project functions should be checked every 3 hours
+alarm_period_ring_2 = 6  # advanced project functions should be checked every 6 hours
+alarm_period_ring_3 = 12  # basic cell/code level functions should be checked every 12 hours
+alarm_period_ring_4 = 24  # advanced cell/code level functions should be checked every 24 hours
+
+ring_0 = ['cust-portal', 'user-orgs']
+ring_1 = ['analyze-func', 'compliance-func', 'perf-function', 'customprocess', 'draft-blueprint', 'explain', 'flowdiagram', 'quick-blueprint']
+ring_2 = ['blueprint', 'summary']
+ring_3 = ['analyze', 'compliance', 'perf']
+ring_4 = ['codeguidelines', 'generate', 'testgen']
 
 
-def update_canary_schedule(client, debug, whatif, detailed, canary, new_schedule_expression=canary_schedule):
+def update_canary_schedule(client, debug, whatif, detailed, canary, new_schedule_expression):
     canary_name = canary['Name']
     current_schedule = canary['Schedule']
     if current_schedule['Expression'] == new_schedule_expression:
@@ -67,7 +81,7 @@ def get_alarms_by_substring(client, substring):
     return alarms
 
 
-def update_alarm(client, debug, whatif, canary_name):
+def update_alarm(client, debug, whatif, canary_name, alarm_schedule, alarm_period):
 
     alarms = get_alarms_by_substring(client, canary_name)
 
@@ -98,7 +112,7 @@ def update_alarm(client, debug, whatif, canary_name):
 
                 if whatif:
                     print(colored(f"   Alarm for Canary {canary_name} should be updated"
-                                f" to have the following period: {alarm_period}", 'red'))
+                                  f" to have the following period: {alarm_period}", 'red'))
                     continue
 
                 alarm_copy['Period'] = alarm_period
@@ -216,12 +230,36 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
         else:
             not_running_services.append(canary['Name'])
 
-        if update_canary_schedule(client, debug, whatif, detailed, canary, canary_schedule) == 1:
+        service_name = canary['Name'].replace(f"{stage}-", "", 1)
+
+        if service_name in ring_0:
+            this_alarm_period = alarm_period_ring_0
+        elif service_name in ring_1:
+            this_alarm_period = alarm_period_ring_1
+        elif service_name in ring_2:
+            this_alarm_period = alarm_period_ring_2
+        elif service_name in ring_3:
+            this_alarm_period = alarm_period_ring_3
+        elif service_name in ring_4:
+            this_alarm_period = alarm_period_ring_4
+        else:
+            print(colored(f"   Canary {canary['Name']} not in any ring", 'red'))
+            continue
+
+        if this_alarm_period == 24:
+            desired_schedule = canary_schedule_day.format(this_alarm_period)
+        elif this_alarm_period == 1:
+            desired_schedule = canary_schedule_hourly.format(this_alarm_period)
+        else:
+            desired_schedule = canary_schedule_cron.format(this_alarm_period)
+
+        if update_canary_schedule(client, debug, whatif, detailed, canary, desired_schedule) == 1:
             misconfigured_services.append(canary['Name'])
 
         # Update alarm schedule
         cw_client = boto3.client('cloudwatch', region_name='us-west-2')
-        if update_alarm(cw_client, debug, whatif, canary['Name']):
+        desired_period = this_alarm_period * secs_per_hour
+        if update_alarm(cw_client, debug, whatif, canary['Name'], desired_schedule, desired_period):
             misconfigured_services.append(canary['Name'])
 
     print("\n   ")

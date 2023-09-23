@@ -14,7 +14,7 @@ alarm_period_ring_2 = 6  # advanced project functions should be checked every 6 
 alarm_period_ring_3 = 12  # basic cell/code level functions should be checked every 12 hours
 alarm_period_ring_4 = 24  # advanced cell/code level functions should be checked every 24 hours
 
-ring_0 = ['cust-portal', 'user-orgs']
+ring_0 = ['cust-portal', 'user-orgs', 'customer_portal']
 ring_1 = ['analyze-func', 'compliance-func', 'perf-function', 'customprocess', 'draft-blueprint', 'explain', 'flowdiagram', 'quick-blueprint']
 ring_2 = ['blueprint', 'summary']
 ring_3 = ['analyze', 'compliance', 'perf']
@@ -85,6 +85,11 @@ def get_alarms_by_substring(client, substring):
 def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period):
 
     alarms = get_alarms_by_substring(client, alarm_name)
+
+    if ("cust-portal" in alarm_name):
+        # special case customer portal naming variants
+        portal_alarms = get_alarms_by_substring(client, alarm_name.replace("cust-portal", "customer_portal"))
+        alarms.extend(portal_alarms)
 
     syntheticFound = False
     applicationInsightFound = True
@@ -206,7 +211,7 @@ def get_canaries_by_substring(client, substring=None):
     return canaries
 
 
-def list_all_canaries_status(client, debug, whatif, stage=None, status=None, detailed=False, useServerTime=False):
+def list_all_canaries_status(client, debug, whatif, stage=None, name=None, status=None, detailed=False, useServerTime=False):
     failing_services = []
     not_running_services = []
     misconfigured_services = []
@@ -217,6 +222,9 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
 
     for canary in canaries:
         if stage is not None and not canary['Name'].startswith(stage):
+            continue
+
+        if name is not None and name not in canary['Name']:
             continue
 
         print(f"Checking: {canary['Name']}")
@@ -304,6 +312,7 @@ def list_all_canaries_status(client, debug, whatif, stage=None, status=None, det
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Check status of specific AWS canaries.')
     parser.add_argument('--stage', type=str, help='The stage used to filter canaries.')
+    parser.add_argument('--name', type=str, help='The name used to filter canaries.')
     parser.add_argument('--debug', action='store_true', help='Enable Debug console logging.')
     parser.add_argument('--whatif', action='store_true', help='Check config = but do not update.')
     parser.add_argument('--status', type=str, help='The status used to filter canary runs.')
@@ -314,7 +323,7 @@ if __name__ == '__main__':
     client = boto3.client('synthetics', region_name='us-west-2')  # Change the region name if needed
 
     try:
-        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.status, args.detailed, args.useServerTime)
+        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.name, args.status, args.detailed, args.useServerTime)
     except KeyboardInterrupt:
         print(colored("Exiting by User Interupt...", 'red'))
         result = 1

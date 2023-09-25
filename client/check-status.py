@@ -82,14 +82,16 @@ def get_alarms_by_substring(client, substring):
     return alarms
 
 
-def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period):
+def update_alarm(client, debug, whatif, stage, alarm_name, alarm_schedule, alarm_period, deleteDisabled) -> bool:
 
     alarms = get_alarms_by_substring(client, alarm_name)
 
-    if ("cust-portal" in alarm_name):
-        # special case customer portal naming variants
-        portal_alarms = get_alarms_by_substring(client, alarm_name.replace("cust-portal", "customer_portal"))
-        alarms.extend(portal_alarms)
+    # add monitor alarms as well as direct service alarms
+    if stage is not None:
+        monitor_name_fixup = alarm_name.replace(f"{stage}-", f"{stage}-monitor_")
+        monitor_alarms = get_alarms_by_substring(client, monitor_name_fixup)
+
+        alarms.extend(monitor_alarms)
 
     syntheticFound = False
     applicationInsightFound = True
@@ -108,7 +110,8 @@ def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period
             else:
                 if debug:
                     print(f"   Alarm for {alarm_name} already has the desired config.")
-                continue
+                if not deleteDisabled:
+                    continue
 
             if debug:
                 print(f"Alarm for {alarm_name}:\n   {alarm}")
@@ -145,7 +148,8 @@ def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period
             else:
                 if debug:
                     print(f"   Alarm for Application Insight {alarm['AlarmName']} is disabled (as expected).")
-                continue
+                if not deleteDisabled:
+                    continue
 
             if debug:
                 print(f"Alarm for {alarm['AlarmName']} Application Insight:\n   {alarm}")
@@ -177,12 +181,18 @@ def update_alarm(client, debug, whatif, alarm_name, alarm_schedule, alarm_period
         del alarm_copy['StateReasonData']
         del alarm_copy['StateUpdatedTimestamp']
 
+        if deleteDisabled and not alarm_copy['ActionsEnabled']:
+            print(colored(f"   Deleting Alarm {alarm['AlarmName']} as it is disabled.", 'yellow'))
+            client.delete_alarms(AlarmNames=[alarm['AlarmName']])
+            continue
+
         # Call the put_metric_alarm function with the updated dictionary
         client.put_metric_alarm(**alarm_copy)
 
     # Check if alarm exists
     if not syntheticFound:
-        print(colored(f"   No Synthentic Alarm with the name {alarm_name} found.", "red"))
+        if debug:
+            print(colored(f"   No Synthentic Alarm with the name {alarm_name} found.", "red"))
 
     if not applicationInsightFound:
         print(colored(f"   No Application Insights Alarms with the name {alarm_name} found.", "red"))
@@ -211,7 +221,7 @@ def get_canaries_by_substring(client, substring=None):
     return canaries
 
 
-def list_all_canaries_status(client, debug, whatif, stage=None, name=None, status=None, detailed=False, useServerTime=False):
+def list_all_canaries_status(client, debug, whatif, stage=None, name=None, status=None, detailed=False, useServerTime=False, deleteDisabled=False):
     failing_services = []
     not_running_services = []
     misconfigured_services = []
@@ -290,8 +300,14 @@ def list_all_canaries_status(client, debug, whatif, stage=None, name=None, statu
         # Update alarm schedule
         cw_client = boto3.client('cloudwatch', region_name='us-west-2')
         desired_period = this_alarm_period * secs_per_hour
-        if update_alarm(cw_client, debug, whatif, canary['Name'], desired_schedule, desired_period):
+        if update_alarm(cw_client, debug, whatif, stage, canary['Name'], desired_schedule, desired_period, deleteDisabled):
             misconfigured_services.append(canary['Name'])
+
+        # special case customer portal naming variants
+        if ('cust-portal' in canary['Name']):
+            alarm_name = canary['Name'].replace("cust-portal", "customer_portal")
+            if update_alarm(cw_client, debug, whatif, stage, alarm_name, desired_schedule, desired_period, deleteDisabled):
+                misconfigured_services.append(canary['Name'])
 
     print("\n   ")
 
@@ -314,6 +330,7 @@ if __name__ == '__main__':
     parser.add_argument('--stage', type=str, help='The stage used to filter canaries.')
     parser.add_argument('--name', type=str, help='The name used to filter canaries.')
     parser.add_argument('--debug', action='store_true', help='Enable Debug console logging.')
+    parser.add_argument('--deleteDisabled', action='store_true', help='Delete disabled alarms.')
     parser.add_argument('--whatif', action='store_true', help='Check config = but do not update.')
     parser.add_argument('--status', type=str, help='The status used to filter canary runs.')
     parser.add_argument('--useServerTime', action='store_true', help='Print timestamps in Cloud server time (instead of local time).')
@@ -323,7 +340,7 @@ if __name__ == '__main__':
     client = boto3.client('synthetics', region_name='us-west-2')  # Change the region name if needed
 
     try:
-        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.name, args.status, args.detailed, args.useServerTime)
+        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.name, args.status, args.detailed, args.useServerTime, args.deleteDisabled)
     except KeyboardInterrupt:
         print(colored("Exiting by User Interupt...", 'red'))
         result = 1

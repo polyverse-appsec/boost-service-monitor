@@ -84,6 +84,9 @@ def get_alarms_by_substring(client, substring):
 
 def update_alarm(client, debug, whatif, stage, alarm_name, alarm_schedule, alarm_period, deleteDisabled) -> bool:
 
+    if "summ" in alarm_name:
+        print(colored(f"   Scanning Summarization Alarm {alarm_name}", 'yellow'))
+
     alarms = get_alarms_by_substring(client, alarm_name)
 
     # add monitor alarms as well as direct service alarms
@@ -221,7 +224,7 @@ def get_canaries_by_substring(client, substring=None):
     return canaries
 
 
-def list_all_canaries_status(client, debug, whatif, stage=None, name=None, status=None, detailed=False, useServerTime=False, deleteDisabled=False):
+def check_status_of_all_canaries_and_alarms(client, debug, whatif, stage=None, name=None, status=None, detailed=False, useServerTime=False, deleteDisabled=False, checkAll=False):
     failing_services = []
     not_running_services = []
     misconfigured_services = []
@@ -309,6 +312,12 @@ def list_all_canaries_status(client, debug, whatif, stage=None, name=None, statu
             if update_alarm(cw_client, debug, whatif, stage, alarm_name, desired_schedule, desired_period, deleteDisabled):
                 misconfigured_services.append(canary['Name'])
 
+        # special case summary naming variants
+        if ('summary' in canary['Name']):
+            alarm_name = canary['Name'].replace("summary", "summarize")
+            if update_alarm(cw_client, debug, whatif, stage, alarm_name, desired_schedule, desired_period, deleteDisabled):
+                misconfigured_services.append(canary['Name'])
+
     print("\n   ")
 
     if misconfigured_services:
@@ -332,6 +341,7 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', help='Enable Debug console logging.')
     parser.add_argument('--deleteDisabled', action='store_true', help='Delete disabled alarms.')
     parser.add_argument('--whatif', action='store_true', help='Check config = but do not update.')
+    parser.add_argument('--checkAll', action='store_true', help='Check all canaries and alarms, regardless of type')
     parser.add_argument('--status', type=str, help='The status used to filter canary runs.')
     parser.add_argument('--useServerTime', action='store_true', help='Print timestamps in Cloud server time (instead of local time).')
     parser.add_argument('--detailed', action='store_true', help='Print detailed information of each canary.')
@@ -340,7 +350,7 @@ if __name__ == '__main__':
     client = boto3.client('synthetics', region_name='us-west-2')  # Change the region name if needed
 
     try:
-        result = list_all_canaries_status(client, args.debug, args.whatif, args.stage, args.name, args.status, args.detailed, args.useServerTime, args.deleteDisabled)
+        result = check_status_of_all_canaries_and_alarms(client, args.debug, args.whatif, args.stage, args.name, args.status, args.detailed, args.useServerTime, args.deleteDisabled, args.checkAll)
     except KeyboardInterrupt:
         print(colored("Exiting by User Interupt...", 'red'))
         result = 1

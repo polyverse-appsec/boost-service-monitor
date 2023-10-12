@@ -65,7 +65,12 @@ def test_monitors(stage=None, name=None, show_available=False):
 
             # Retrieve the URI for the monitor
             client = boto3.client('lambda', region_name='us-west-2')
-            config = client.get_function_url_config(FunctionName=function_name)
+            try:
+                config = client.get_function_url_config(FunctionName=function_name)
+            except client.exceptions.ResourceNotFoundException:
+                print(colored(f"Monitor for {monitor_name} (aka {function_name}) not found in {stage}", 'red'))
+                continue
+
             uri = config['FunctionUrl']
 
             print(f"Running monitor: {monitor_name} in Stage:{stage}")

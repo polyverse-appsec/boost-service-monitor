@@ -51,6 +51,18 @@
         "justMyCode": true
     },
     {
+        "name": "Test Services (test Prod)",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/client/test-services.py",
+        "args": [
+            "--stage",
+            "prod"
+          ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },    {
         "name": "Test Services (Test All)",
         "type": "python",
         "request": "launch",

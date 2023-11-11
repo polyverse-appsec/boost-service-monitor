@@ -9,7 +9,7 @@
     "stages": {
         "dev": {
             "api_gateway_stage": "api",
-            "lambda_timeout": 240,
+            "lambda_timeout": 900,
             "tags": {
                 "Environment": "dev"
             },
@@ -19,7 +19,7 @@
         },
         "prod": {
             "api_gateway_stage": "api",
-            "lambda_timeout": 240,
+            "lambda_timeout": 900,
             "tags": {
                 "Environment": "prod"
             },

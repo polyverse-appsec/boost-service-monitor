@@ -3,6 +3,17 @@ Polyverse Boost Cloud Service Monitor
 
 # Release Notes
 
+## Version 0.5.0: November 10th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- Set default monitor timeout to 15 minutes to sync with Boost service timeout
+
+### Bug Fixes
+- N/A
+
 ## Version 0.4.4: September 22nd, 2023
 
 ### New Features
